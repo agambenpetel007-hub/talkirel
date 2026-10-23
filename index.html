@@ -3,118 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>תל קירל - העיר הרשמית של נועה קירל 🦄</title>
+    <title>תל קירל - עולם המעריצים הרשמי</title>
+    <!-- טעינת ספריית תלת מימד Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #ffe6f0, #ffffff, #ffd1dc);
             margin: 0;
-            padding: 15px;
-            color: #333;
-            text-align: center;
-        }
-        .header {
-            background: linear-gradient(90deg, #ff69b4, #ff1493);
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
             color: white;
-            padding: 25px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4);
-            margin-bottom: 20px;
+            user-select: none;
         }
-        h1 { margin: 0; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin: 15px auto;
-            max-width: 500px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 2px solid #ffb6c1;
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
         }
-        .unicorn-map {
-            width: 100%;
-            max-width: 350px;
-            margin: 20px auto;
-            position: relative;
+
+        /* סרגל עליון בסגנון המשחק */
+        .top-bar {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
         }
-        .area-btn {
-            background: #ff69b4;
+
+        .stats-box {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ec4899;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
             color: white;
             border: none;
-            padding: 12px 20px;
-            margin: 8px 0;
-            width: 100%;
+            padding: 10px 20px;
             border-radius: 12px;
-            font-size: 1.1em;
             font-weight: bold;
+            font-size: 15px;
             cursor: pointer;
-            transition: transform 0.2s;
+            pointer-events: auto;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .area-btn:active { transform: scale(0.98); }
-        input[type="text"] {
-            width: 80%;
-            padding: 12px;
-            border: 2px solid #ff69b4;
-            border-radius: 10px;
-            font-size: 1em;
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.8);
+        }
+
+        /* תפריט תחתון / כפתורים מרכזיים */
+        .bottom-nav {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .nav-card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid #f43f5e;
+            padding: 12px 25px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: bold;
             text-align: center;
-            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            transition: all 0.3s;
         }
-        .id-card {
-            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
-            border: 3px dashed #ff1493;
-            border-radius: 15px;
-            padding: 15px;
+
+        .nav-card:hover {
+            background: #f43f5e;
+            transform: translateY(-3px);
+        }
+
+        /* מודל / חלון קופץ */
+        .modal {
             display: none;
-            margin-top: 15px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1e1b4b;
+            border: 3px solid #ec4899;
+            padding: 30px;
+            border-radius: 20px;
+            z-index: 100;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .modal h2 {
+            color: #f472b6;
+            margin-top: 0;
+        }
+
+        .modal input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ec4899;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            margin: 15px 0;
+        }
+
+        .close-modal {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🦄 ברוכים הבאים ל-תל קירל! 👑</h1>
-        <p>העיר הדיגיטלית הרשמית של נועה קירל והמעריצים</p>
-    </div>
-
-    <div class="card">
-        <h2>🆔 הנפקת תעודת תושב/ת תל קירל</h2>
-        <p>הקלידי את השם שלך כדי לקבל תעודת תושב רשמית:</p>
-        <input type="text" id="citizenName" placeholder="הכניסי את שמך כאן...">
-        <button class="area-btn" onclick="generateID()">הנפיקי תעודת תושב ✨</button>
-
-        <div id="idCard" class="id-card">
-            <h3>🏛️ תעודת תושב/ת רשמית</h3>
-            <p><strong>שם התושב/ת:</strong> <span id="displayName"></span></p>
-            <p><strong>מספר תושב:</strong> #TK-<span id="idNum"></span></p>
-            <p><strong>מעמד:</strong> מעריץ/ה מושבע/ת 💖</p>
-            <p>✨ מאושר על ידי עיריית תל קירל ✨</p>
+    <!-- סרגל עליון -->
+    <div class="top-bar">
+        <div class="stats-box">
+            <span>🦄 תושבים: <span id="population">28,800</span></span>
+            <span>⭐ יום 18</span>
         </div>
+        <button class="action-btn" onclick="openModal()">התחברות 👑</button>
     </div>
 
-    <div class="card">
-        <h2>🗺️ מפת העיר "תל קירל" (בצורת חד-קרן 🦄)</h2>
-        <p>לחצי על השכונות במפת חד-הקרן כדי לגלות את העיר:</p>
-        
-        <button class="area-btn" onclick="alert('✨ קרן הזהב: מתחם פנומן והאירוויזיון!')">✨ קרן הזהב (מתחם פנומן)</button>
-        <button class="area-btn" onclick="alert('🐆 שדרות פנתר: מועדון המוזיקה והשירים!')">🐆 שדרות פנתר (חדר מוזיקה)</button>
-        <button class="area-btn" onclick="alert('📸 מוזיאון דובדבן: גלריית הלוקים והתלבושות!')">📸 מוזיאון דובדבן (אופנה וסטייל)</button>
-        <button class="area-btn" onclick="alert('🏟️ אצטדיון פארק הירקון: אזור ההופעות החיות!')">🏟️ אצטדיון פארק הירקון (הופעות)</button>
+    <!-- אזור תלת מימד -->
+    <div id="canvas-container"></div>
+
+    <!-- תפריט תחתון -->
+    <div class="bottom-nav">
+        <div class="nav-card" onclick="alert('ברוכים הבאים לפארק החד-קרן של תל קירל! 🦄')">🦄 פארק החד-קרן</div>
+        <div class="nav-card" onclick="alert('מרכז המידע של נועה קירל פתוח 24/7! ✨')">ℹ️ מרכז מידע</div>
+    </div>
+
+    <!-- חלון קופץ התחברות / תעודת תושב -->
+    <div id="authModal" class="modal">
+        <h2>תעודת תושב - תל קירל</h2>
+        <p>הקלידי את שמך כדי לקבל אזרחות רשמית:</p>
+        <input type="text" id="usernameInput" placeholder="הקלידי שם..." value="אגם">
+        <br>
+        <button class="action-btn" onclick="issueIdCard()" style="width: 100%;">הנפיקי תעודה 💖</button>
+        <br>
+        <button class="close-modal" onclick="closeModal()">סגור</button>
     </div>
 
     <script>
-        function generateID() {
-            var name = document.getElementById('citizenName').value;
-            if(name.trim() === "") {
-                alert("בבקשה הכניסי שם!");
-                return;
+        // יצירת עולם תלת-מימד מדהים עם Three.js
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b0f19);
+        scene.fog = new THREE.FogExp2(0x0b0f19, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 35, 45);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // תאורה
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffb6c1, 1);
+        dirLight.position.set(20, 40, 20);
+        scene.add(dirLight);
+
+        // קרקע העיר
+        const planeGeo = new THREE.PlaneGeometry(100, 100);
+        const planeMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.8 });
+        const plane = new THREE.Mesh(planeGeo, planeMat);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        // בניינים בעיר (רשת קוביות)
+        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x312e81, roughness: 0.5 });
+        const buildings = [];
+        
+        for (let x = -40; x <= 40; x += 8) {
+            for (let z = -40; z <= 40; z += 8) {
+                if (Math.abs(x) < 10 && Math.abs(z) < 10) continue; // השארת מרכז פנוי
+                const h = Math.random() * 15 + 5;
+                const geom = new THREE.BoxGeometry(5, h, 5);
+                const bldg = new THREE.Mesh(geom, buildingMat);
+                bldg.position.set(x + (Math.random()-0.5)*2, h/2, z + (Math.random()-0.5)*2);
+                scene.add(bldg);
+                buildings.push(bldg);
             }
-            document.getElementById('displayName').innerText = name;
-            document.getElementById('idNum').innerText = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('idCard').style.display = 'block';
+        }
+
+        // פסל ענק של נועה קירל במרכז (מגדל מפואר)
+        const statueBaseGeo = new THREE.CylinderGeometry(4, 6, 12, 16);
+        const statueBaseMat = new THREE.MeshStandardMaterial({ color: 0xdb2777 });
+        const statueBase = new THREE.Mesh(statueBaseGeo, statueBaseMat);
+        statueBase.position.set(0, 6, 0);
+        scene.add(statueBase);
+
+        const statueTopGeo = new THREE.SphereGeometry(3, 16, 16);
+        const statueTopMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, emissive: 0xdb2777, emissiveIntensity: 0.5 });
+        const statueTop = new THREE.Mesh(statueTopGeo, statueTopMat);
+        statueTop.position.set(0, 14, 0);
+        scene.add(statueTop);
+
+        // אנימציית סיבוב של המצלמה סביב העיר
+        let angle = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            angle += 0.003;
+            camera.position.x = Math.cos(angle) * 50;
+            camera.position.z = Math.sin(angle) * 50;
+            camera.lookAt(0, 5, 0);
+            
+            // סיבוב קל לפסל
+            statueTop.rotation.y += 0.01;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // טיפול בשינוי גודל מסך
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // פונקציות למודל
+        function openModal() {
+            document.getElementById('authModal').style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+        function issueIdCard() {
+            const name = document.getElementById('usernameInput').value;
+            alert(`🎉 מזל טוב ${name}! הונפקה לך תעודת תושב רשמית של תל קירל! מספר תושב: TK-2026# ✨`);
+            closeModal();
         }
     </script>
-
 </body>
 </html>
-
